@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}System Notice | Legal Metrology Compliance System{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-7">
+            <div class="card border-0 shadow-sm text-center p-4">
+                <div class="card-body">
+                    <div class="error-icon mb-3">
+                        <i class="bi bi-exclamation-octagon display-1 text-danger"></i>
+                    </div>
+                    <h3 class="fw-bold text-slate-800 mb-2">Notice: {{ code if code else "Audit Processing Issue" }}</h3>
+                    <p class="text-muted mb-4">{{ message if message else "The requested action could not be completed at this moment." }}</p>
+
+                    <div class="p-3 bg-light rounded text-start small mb-4">
+                        <h6 class="fw-bold text-dark mb-2"><i class="bi bi-tools text-primary me-1"></i> Common Troubleshooting Guidelines:</h6>
+                        <ul class="text-muted mb-0 ps-3">
+                            <li class="mb-1"><strong>Tesseract OCR Installation:</strong> For live Windows scans, install Tesseract OCR from official repository to <code>C:\Program Files\Tesseract-OCR\tesseract.exe</code>.</li>
+                            <li class="mb-1"><strong>Image File:</strong> Supported formats are <code>.jpg</code>, <code>.jpeg</code>, <code>.png</code>, and <code>.webp</code> up to 16 MB.</li>
+                            <li class="mb-1"><strong>Image Clarity:</strong> Blurry or highly angled photographs may fail OCR segmentation. Ensure the text is upright and sharply in focus.</li>
+                            <li><strong>Demo Scenarios:</strong> You can always test the full workflow instantly using the preloaded demo buttons on the home or upload page.</li>
+                        </ul>
+                    </div>
+
+                    <div class="d-flex justify-content-center gap-3">
+                        <a href="{{ url_for('check') }}" class="btn btn-primary px-4 fw-semibold">
+                            <i class="bi bi-arrow-clockwise me-1"></i> Try Again
+                        </a>
+                        <a href="{{ url_for('index') }}" class="btn btn-outline-secondary px-4">
+                            <i class="bi bi-house me-1"></i> Return to Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

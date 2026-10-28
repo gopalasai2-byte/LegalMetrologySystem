@@ -1,0 +1,31 @@
+# Python virtual environments
+venv/
+env/
+ENV/
+
+# Python bytecode & cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+
+# User uploads and generated compliance reports
+uploads/*
+!uploads/.gitkeep
+reports/*
+!reports/.gitkeep
+
+# SQLite databases & lock files
+database/*.db
+database/*.db-wal
+database/*.db-shm
+
+# Windows / IDE metadata
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.vscode/
+.idea/
+*.log

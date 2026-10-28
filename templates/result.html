@@ -1,0 +1,249 @@
+{% extends "base.html" %}
+
+{% block title %}Audit Report #LMC-{{ "%04d"|format(scan.id) }} | Legal Metrology{% endblock %}
+
+{% block content %}
+<div class="container py-2">
+
+    <!-- Top Action Bar & Status Banner -->
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+        <div>
+            <div class="d-flex align-items-center gap-2">
+                <a href="{{ url_for('history') }}" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> History
+                </a>
+                <h3 class="fw-bold text-slate-800 mb-0">Label Compliance Verification Report</h3>
+            </div>
+            <span class="text-muted small">
+                Audit Reference: <strong>#LMC-{{ "%04d"|format(scan.id) }}</strong> | Scanned on: {{ scan.scan_date }}
+            </span>
+        </div>
+
+        <div class="d-flex align-items-center gap-2">
+            <a href="{{ url_for('download_report', scan_id=scan.id) }}" class="btn btn-danger shadow-sm fw-semibold">
+                <i class="bi bi-file-earmark-pdf-fill me-1"></i> Download PDF Report
+            </a>
+            <a href="{{ url_for('check') }}" class="btn btn-outline-primary fw-semibold">
+                <i class="bi bi-plus-circle me-1"></i> Scan Another
+            </a>
+        </div>
+    </div>
+
+    <!-- Overall Compliance Verdict Card -->
+    <div class="card border-0 shadow-sm mb-4 {% if scan.overall_status == 'PASS' %}border-start border-success border-5{% elif scan.overall_status == 'FAIL' %}border-start border-danger border-5{% else %}border-start border-warning border-5{% endif %}">
+        <div class="card-body p-4">
+            <div class="row align-items-center gy-3">
+                <div class="col-md-3 text-center text-md-start border-end-md">
+                    <div class="text-uppercase small fw-bold text-muted mb-1">Overall Audit Status</div>
+                    <div>
+                        {% if scan.overall_status == 'PASS' %}
+                            <span class="badge bg-success fs-4 px-4 py-2 rounded-pill shadow-sm">
+                                <i class="bi bi-shield-check me-1"></i> PASS
+                            </span>
+                        {% elif scan.overall_status == 'FAIL' %}
+                            <span class="badge bg-danger fs-4 px-4 py-2 rounded-pill shadow-sm">
+                                <i class="bi bi-shield-x me-1"></i> FAIL
+                            </span>
+                        {% else %}
+                            <span class="badge bg-warning text-dark fs-4 px-4 py-2 rounded-pill shadow-sm">
+                                <i class="bi bi-shield-exclamation me-1"></i> REVIEW
+                            </span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="col-md-5">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="fw-bold text-slate-800">Compliance Score</span>
+                        <span class="fw-bold fs-5 {% if scan.compliance_score >= 80 %}text-success{% elif scan.compliance_score >= 50 %}text-warning{% else %}text-danger{% endif %}">
+                            {{ scan.compliance_score }}%
+                        </span>
+                    </div>
+                    <div class="progress mb-2" style="height: 12px;">
+                        <div class="progress-bar {% if scan.compliance_score >= 80 %}bg-success{% elif scan.compliance_score >= 50 %}bg-warning{% else %}bg-danger{% endif %}" 
+                             role="progressbar" 
+                             style="width: {{ scan.compliance_score }}%;" 
+                             aria-valuenow="{{ scan.compliance_score }}" 
+                             aria-valuemin="0" 
+                             aria-valuemax="100"></div>
+                    </div>
+                    <div class="d-flex gap-3 small text-muted">
+                        <span><i class="bi bi-check-circle-fill text-success"></i> {{ compliance.passed_checks }} Passed</span>
+                        <span><i class="bi bi-x-circle-fill text-danger"></i> {{ compliance.failed_checks }} Failed</span>
+                        <span><i class="bi bi-exclamation-triangle-fill text-warning"></i> {{ compliance.review_checks }} Review</span>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="p-3 bg-light rounded small">
+                        <span class="fw-bold d-block text-dark mb-1"><i class="bi bi-info-circle text-primary me-1"></i> Compliance Summary:</span>
+                        <p class="text-muted mb-0">{{ compliance.summary_explanation }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="row g-4 mb-4">
+        
+        <!-- Left Column: Uploaded Image & Raw OCR -->
+        <div class="col-lg-5">
+            <!-- Uploaded Image Box -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3 border-bottom d-flex align-items-center justify-content-between">
+                    <h6 class="card-title fw-bold mb-0">
+                        <i class="bi bi-image text-primary me-1"></i> Uploaded Package Label
+                    </h6>
+                    <small class="text-muted">{{ scan.filename }}</small>
+                </div>
+                <div class="card-body text-center p-3 bg-light">
+                    <img src="{{ url_for('uploaded_file', filename=scan.image_path) }}" alt="Package Label" class="img-fluid rounded shadow-sm border" style="max-height: 380px; object-fit: contain;">
+                </div>
+            </div>
+
+            <!-- OCR Text Transcript Box -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3 border-bottom d-flex align-items-center justify-content-between">
+                    <h6 class="card-title fw-bold mb-0">
+                        <i class="bi bi-file-text text-primary me-1"></i> Extracted OCR Text Transcript
+                    </h6>
+                    <span class="badge bg-secondary-subtle text-secondary">Raw Optical Output</span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="ocr-text-viewer p-3 font-monospace small bg-slate-900 text-slate-100 rounded-bottom" style="max-height: 240px; overflow-y: auto; white-space: pre-wrap;">
+{{ scan.ocr_text if scan.ocr_text else "No raw text extracted." }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Extracted Entities & Compliance Evaluation -->
+        <div class="col-lg-7">
+            
+            <!-- Extracted Declarations Cards/Table -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3 border-bottom">
+                    <h6 class="card-title fw-bold mb-0">
+                        <i class="bi bi-card-checklist text-primary me-1"></i> Extracted Printed Declarations (NLP/Regex)
+                    </h6>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="ps-3">Declaration Field</th>
+                                    <th>Detected Value from Label</th>
+                                    <th>Status / Confidence</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for field_name, field_data in extracted.fields.items() %}
+                                <tr>
+                                    <td class="ps-3 fw-bold text-slate-700">{{ field_name }}</td>
+                                    <td>
+                                        {% if field_data.value %}
+                                            <span class="fw-semibold text-slate-900">{{ field_data.value }}</span>
+                                        {% else %}
+                                            <span class="text-muted fst-italic">Not Detected</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if field_data.status == 'Detected' %}
+                                            <span class="badge bg-success-subtle text-success border border-success-subtle">
+                                                <i class="bi bi-check-circle me-1"></i> Detected
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-warning-subtle text-warning border border-warning-subtle" title="{{ field_data.detail }}">
+                                                <i class="bi bi-exclamation-triangle me-1"></i> Review Required
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Rule Compliance Engine Table -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3 border-bottom d-flex align-items-center justify-content-between">
+                    <h6 class="card-title fw-bold mb-0">
+                        <i class="bi bi-shield-check text-primary me-1"></i> Rule-Based Compliance Evaluation
+                    </h6>
+                    <a href="{{ url_for('rules') }}" class="btn btn-sm btn-link text-decoration-none p-0">View Rule Database</a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="ps-3">Rule Code</th>
+                                    <th>Legal Requirement</th>
+                                    <th>Extracted Information</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for r in compliance.rule_results %}
+                                <tr>
+                                    <td class="ps-3">
+                                        <span class="badge bg-secondary-subtle text-secondary font-monospace">{{ r.rule_code }}</span>
+                                    </td>
+                                    <td>
+                                        <div class="fw-semibold text-slate-900">{{ r.field_name }}</div>
+                                        <small class="text-muted d-block" style="font-size: 0.8rem;">{{ r.requirement }}</small>
+                                    </td>
+                                    <td>
+                                        <small class="fw-semibold text-slate-800">{{ r.extracted_value }}</small>
+                                        <small class="text-muted d-block" style="font-size: 0.75rem;">{{ r.detail_message }}</small>
+                                    </td>
+                                    <td>
+                                        {% if r.status == 'PASS' %}
+                                            <span class="badge bg-success px-2 py-1">
+                                                <i class="bi bi-check-lg"></i> PASS
+                                            </span>
+                                        {% elif r.status == 'FAIL' %}
+                                            <span class="badge bg-danger px-2 py-1">
+                                                <i class="bi bi-x-lg"></i> FAIL
+                                            </span>
+                                        {% elif r.status == 'NOT APPLICABLE' %}
+                                            <span class="badge bg-secondary px-2 py-1">
+                                                <i class="bi bi-slash-circle"></i> N/A
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-warning text-dark px-2 py-1">
+                                                <i class="bi bi-exclamation"></i> REVIEW
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actionable Recommendations Box -->
+            <div class="card border-0 shadow-sm border-start border-info border-4">
+                <div class="card-body p-4">
+                    <h6 class="fw-bold text-slate-800 mb-2">
+                        <i class="bi bi-lightbulb-fill text-info me-2"></i> Auditor & System Recommendations:
+                    </h6>
+                    <ul class="mb-0 text-slate-700 small ps-3">
+                        {% for rec in compliance.recommendations %}
+                            <li class="mb-1">{{ rec }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+{% endblock %}

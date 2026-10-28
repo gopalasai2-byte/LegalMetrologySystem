@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+
+{% block title %}Rules & Statutory Sources | Legal Metrology Compliance System{% endblock %}
+
+{% block content %}
+<div class="container py-2">
+    <!-- Header -->
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+        <div>
+            <h3 class="fw-bold text-slate-800 mb-1">
+                <i class="bi bi-book text-primary me-2"></i> Legal Metrology Rule Database
+            </h3>
+            <p class="text-muted small mb-0">Configurable compliance rules and verified statutory sources from the Department of Consumer Affairs.</p>
+        </div>
+        <button type="button" class="btn btn-primary fw-semibold shadow-sm" data-bs-toggle="modal" data-bs-target="#addRuleModal">
+            <i class="bi bi-plus-lg me-1"></i> Add New Rule
+        </button>
+    </div>
+
+    <!-- Active Rules Table -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white py-3 border-bottom d-flex align-items-center justify-content-between">
+            <h5 class="card-title fw-bold mb-0">Active Compliance Rule Registry</h5>
+            <span class="badge bg-secondary-subtle text-secondary">{{ rules|length }} Configured Rules</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-3">Code</th>
+                            <th>Field Name</th>
+                            <th>Statutory Requirement</th>
+                            <th>Applicability</th>
+                            <th>Validation Type</th>
+                            <th>Official Source</th>
+                            <th>Severity</th>
+                            <th>Status</th>
+                            <th class="text-end pe-3">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in rules %}
+                        <tr class="{{ 'table-secondary text-muted' if r.active == 0 }}">
+                            <td class="ps-3 font-monospace fw-bold">{{ r.rule_code }}</td>
+                            <td class="fw-semibold text-slate-900">{{ r.field_name }}</td>
+                            <td>
+                                <span class="small d-block">{{ r.requirement }}</span>
+                            </td>
+                            <td><span class="badge bg-light text-dark border">{{ r.applicability }}</span></td>
+                            <td><code class="small text-primary">{{ r.validation_type }}</code></td>
+                            <td>
+                                <small class="text-muted d-block" style="max-width: 180px;">{{ r.source_document }}</small>
+                            </td>
+                            <td>
+                                {% if r.severity == 'CRITICAL' %}
+                                    <span class="badge bg-danger">CRITICAL</span>
+                                {% elif r.severity == 'HIGH' %}
+                                    <span class="badge bg-warning text-dark">HIGH</span>
+                                {% else %}
+                                    <span class="badge bg-info text-dark">MEDIUM</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if r.active == 1 %}
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle">Active</span>
+                                {% else %}
+                                    <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle">Inactive</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end pe-3">
+                                <form action="{{ url_for('toggle_rule', rule_id=r.id) }}" method="POST" class="d-inline">
+                                    {% if r.active == 1 %}
+                                        <button type="submit" class="btn btn-sm btn-outline-warning" title="Disable rule">
+                                            <i class="bi bi-pause-fill"></i> Disable
+                                        </button>
+                                    {% else %}
+                                        <button type="submit" class="btn btn-sm btn-outline-success" title="Enable rule">
+                                            <i class="bi bi-play-fill"></i> Enable
+                                        </button>
+                                    {% endif %}
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Verified Rule Sources Section -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white py-3 border-bottom">
+            <h5 class="card-title fw-bold mb-0">
+                <i class="bi bi-building-check text-primary me-2"></i> Verified Official Legal Metrology Sources
+            </h5>
+        </div>
+        <div class="card-body p-4">
+            <p class="text-muted small mb-4">
+                The compliance checking engine in this project evaluates declarations exclusively against verified, official statutory publications rather than unverified web scrapes. Each rule in our database carries an explicit source document reference and version identifier for complete audit traceability:
+            </p>
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="p-3 border rounded h-100 bg-light">
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <span class="badge bg-primary">Primary Statute</span>
+                            <h6 class="fw-bold mb-0 text-slate-800">The Legal Metrology Act, 2009 (Act No. 1 of 2010)</h6>
+                        </div>
+                        <p class="small text-muted mb-2">
+                            Enacted by the Parliament of India to establish and enforce standards of weights and measures, regulate trade and commerce in weights, measures and other goods which are sold or distributed by weight, measure or number.
+                        </p>
+                        <small class="fw-semibold text-slate-700">Key Sections: Section 18 (Declarations on pre-packaged commodities), Section 36 (Penalties for non-compliance).</small>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="p-3 border rounded h-100 bg-light">
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <span class="badge bg-success">Central Rules</span>
+                            <h6 class="fw-bold mb-0 text-slate-800">Legal Metrology (Packaged Commodities) Rules, 2011</h6>
+                        </div>
+                        <p class="small text-muted mb-2">
+                            Published under G.S.R. 202(E) and amended periodically (e.g. G.S.R. 779(E)). Prescribes mandatory printed declarations required on every packaged commodity intended for retail sale.
+                        </p>
+                        <small class="fw-semibold text-slate-700">Key Rules: Rule 6 (Mandatory Declarations on package), Rule 12 (Manner in which units shall be expressed).</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="alert alert-secondary mt-3 mb-0 small">
+                <i class="bi bi-info-circle me-1 text-primary"></i>
+                <strong>Notice for Reviewers:</strong> Rules in this prototype are configurable and can be extended to cover industry-specific regulations (e.g., electronic items, cosmetics, foodstuffs) through the "Add New Rule" feature without changing the core source code.
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Rule Modal -->
+<div class="modal fade" id="addRuleModal" tabindex="-1" aria-labelledby="addRuleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form action="{{ url_for('add_new_rule') }}" method="POST">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold" id="addRuleModalLabel">
+                        <i class="bi bi-plus-circle text-primary me-2"></i> Add Configurable Legal Metrology Rule
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">Rule Code <span class="text-danger">*</span></label>
+                            <input type="text" name="rule_code" class="form-control font-monospace" placeholder="e.g. LM007" required>
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label small fw-bold">Field Name <span class="text-danger">*</span></label>
+                            <input type="text" name="field_name" class="form-control" placeholder="e.g. Country of Origin" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-bold">Statutory Requirement Description <span class="text-danger">*</span></label>
+                            <textarea name="requirement" rows="2" class="form-control" placeholder="Mandatory declaration of the country of manufacture or assembly." required></textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Product Applicability</label>
+                            <input type="text" name="applicability" class="form-control" value="All packaged commodities">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Validation Type</label>
+                            <select name="validation_type" class="form-select">
+                                <option value="required" selected>required (must be detected)</option>
+                                <option value="numeric_gt_zero">numeric_gt_zero (positive monetary/numeric)</option>
+                                <option value="valid_unit">valid_unit (standard metric weight/measure)</option>
+                                <option value="contact_valid">contact_valid (phone or email channel)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label small fw-bold">Official Statutory Source Document</label>
+                            <input type="text" name="source_document" class="form-control" value="Legal Metrology (Packaged Commodities) Rules, 2011 - Rule 6(1)">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">Severity Level</label>
+                            <select name="severity" class="form-select">
+                                <option value="HIGH" selected>HIGH</option>
+                                <option value="CRITICAL">CRITICAL</option>
+                                <option value="MEDIUM">MEDIUM</option>
+                                <option value="LOW">LOW</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-bold">Non-Compliance Error Message</label>
+                            <input type="text" name="error_message" class="form-control" value="Required statutory declaration was not identified on the package label.">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary fw-semibold">Save Rule to Database</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

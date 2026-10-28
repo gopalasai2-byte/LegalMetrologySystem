@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Legal Metrology Compliance System{% endblock %}</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="bg-light d-flex flex-column min-vh-100">
+
+    <!-- Top Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-slate-900 border-bottom border-secondary shadow-sm py-2">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center gap-2" href="{{ url_for('index') }}">
+                <div class="brand-icon bg-primary text-white rounded p-2 d-flex align-items-center justify-content-center">
+                    <i class="bi bi-shield-check fs-5"></i>
+                </div>
+                <div>
+                    <span class="fw-bold fs-5 tracking-tight d-block">Legal Metrology Compliance</span>
+                    <span class="text-secondary small d-none d-sm-block">Packaged Commodities Audit System</span>
+                </div>
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navContent">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navContent">
+                <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-lg-center gap-1">
+                    <li class="nav-item">
+                        <a class="nav-link px-3 {{ 'active fw-semibold' if request.endpoint == 'index' }}" href="{{ url_for('index') }}">
+                            <i class="bi bi-speedometer2 me-1"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link px-3 {{ 'active fw-semibold' if request.endpoint == 'check' }}" href="{{ url_for('check') }}">
+                            <i class="bi bi-upc-scan me-1"></i> Check Compliance
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link px-3 {{ 'active fw-semibold' if request.endpoint == 'history' }}" href="{{ url_for('history') }}">
+                            <i class="bi bi-clock-history me-1"></i> Scan History
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link px-3 {{ 'active fw-semibold' if request.endpoint == 'rules' }}" href="{{ url_for('rules') }}">
+                            <i class="bi bi-book me-1"></i> Rules & Sources
+                        </a>
+                    </li>
+                    
+                    <li class="nav-item ms-lg-2">
+                        {% if ocr_active %}
+                        <span class="badge bg-success-subtle text-success border border-success-subtle py-2 px-3 rounded-pill" title="{{ ocr_engine_name }}">
+                            <i class="bi bi-cpu-fill me-1"></i> {{ ocr_engine_name }}
+                        </span>
+                        {% else %}
+                        <span class="badge bg-warning-subtle text-warning border border-warning-subtle py-2 px-3 rounded-pill">
+                            <i class="bi bi-exclamation-triangle-fill me-1"></i> OCR Mock / Demo Mode
+                        </span>
+                        {% endif %}
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Flash Messages -->
+    <div class="container mt-3">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show shadow-sm" role="alert">
+                        <div class="d-flex align-items-center gap-2">
+                            {% if category == 'success' %}
+                                <i class="bi bi-check-circle-fill fs-5"></i>
+                            {% elif category == 'danger' %}
+                                <i class="bi bi-x-circle-fill fs-5"></i>
+                            {% elif category == 'warning' %}
+                                <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+                            {% else %}
+                                <i class="bi bi-info-circle-fill fs-5"></i>
+                            {% endif %}
+                            <div>{{ message }}</div>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <!-- Main Content -->
+    <main class="flex-grow-1 py-4">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-top py-4 mt-auto">
+        <div class="container text-center text-md-start">
+            <div class="row align-items-center gy-3">
+                <div class="col-md-7">
+                    <p class="mb-1 fw-bold text-dark">
+                        <i class="bi bi-mortarboard me-1 text-primary"></i>
+                        Software System to Check Compliance of Packaged Commodities under Legal Metrology
+                    </p>
+                    <p class="mb-0 text-muted small">
+                        College Major Project | Optical Character Recognition & Rule-Based Legal Metrology Verification Engine.
+                    </p>
+                    <p class="mb-0 text-muted small fst-italic">
+                        <b>Disclaimer:</b> Preliminary software-assisted verification of printed package declarations. It does not certify physical quantity or quality.
+                    </p>
+                </div>
+                <div class="col-md-5 text-md-end">
+                    <span class="badge bg-secondary-subtle text-secondary me-2">Python 3.11</span>
+                    <span class="badge bg-secondary-subtle text-secondary me-2">Flask</span>
+                    <span class="badge bg-secondary-subtle text-secondary me-2">OpenCV</span>
+                    <span class="badge bg-secondary-subtle text-secondary me-2">Tesseract OCR</span>
+                    <span class="badge bg-secondary-subtle text-secondary">SQLite3</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JS -->
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+
+{% block title %}Scan History | Legal Metrology Compliance System{% endblock %}
+
+{% block content %}
+<div class="container py-2">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+        <div>
+            <h3 class="fw-bold text-slate-800 mb-1">
+                <i class="bi bi-clock-history text-primary me-2"></i> Packaged Commodity Scan History
+            </h3>
+            <p class="text-muted small mb-0">Review previously audited product labels, compliance percentages, and regulatory findings.</p>
+        </div>
+        <a href="{{ url_for('check') }}" class="btn btn-primary fw-semibold shadow-sm">
+            <i class="bi bi-plus-circle me-1"></i> New Compliance Audit
+        </a>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white py-3 border-bottom d-flex align-items-center justify-content-between">
+            <span class="fw-bold text-slate-800">Historical Records ({{ scans|length }} audits)</span>
+            {% if scans %}
+            <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#clearAllModal">
+                <i class="bi bi-trash3 me-1"></i> Clear All History
+            </button>
+            {% endif %}
+        </div>
+        <div class="card-body p-0">
+            {% if scans %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-3">Ref ID</th>
+                            <th>Timestamp</th>
+                            <th>Original Filename</th>
+                            <th>Identified Product</th>
+                            <th>Compliance Score</th>
+                            <th>Status</th>
+                            <th class="text-end pe-3">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for scan in scans %}
+                        <tr>
+                            <td class="ps-3 fw-bold text-slate-800 font-monospace">#LMC-{{ "%04d"|format(scan.id) }}</td>
+                            <td><small class="text-muted">{{ scan.scan_date }}</small></td>
+                            <td>
+                                <span class="fw-semibold text-slate-900 text-truncate d-inline-block" style="max-width: 180px;">
+                                    {{ scan.filename }}
+                                </span>
+                            </td>
+                            <td>
+                                {% set p_name = scan.extracted_data.fields.get('Product Name', {}).get('value') if scan.extracted_data and scan.extracted_data.fields else None %}
+                                <span class="small">{{ p_name if p_name else 'Unknown / Unspecified' }}</span>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="progress flex-grow-1" style="height: 6px; width: 70px;">
+                                        <div class="progress-bar {% if scan.compliance_score >= 80 %}bg-success{% elif scan.compliance_score >= 50 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                             style="width: {{ scan.compliance_score }}%;"></div>
+                                    </div>
+                                    <span class="small fw-semibold">{{ scan.compliance_score }}%</span>
+                                </div>
+                            </td>
+                            <td>
+                                {% if scan.overall_status == 'PASS' %}
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">PASS</span>
+                                {% elif scan.overall_status == 'FAIL' %}
+                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1">FAIL</span>
+                                {% else %}
+                                    <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-2 py-1">REVIEW</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end pe-3">
+                                <a href="{{ url_for('result', scan_id=scan.id) }}" class="btn btn-sm btn-outline-primary me-1" title="View Audit Dashboard">
+                                    <i class="bi bi-eye"></i> View
+                                </a>
+                                <a href="{{ url_for('download_report', scan_id=scan.id) }}" class="btn btn-sm btn-outline-danger me-1" title="Download ReportLab PDF">
+                                    <i class="bi bi-file-earmark-pdf"></i> PDF
+                                </a>
+                                <form action="{{ url_for('delete_history_item', scan_id=scan.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete scan record #LMC-{{ '%04d'|format(scan.id) }}?');">
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary text-danger" title="Delete scan record">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5 text-muted">
+                <i class="bi bi-folder-x fs-1 d-block mb-2"></i>
+                <p class="mb-2">No audits have been conducted yet.</p>
+                <a href="{{ url_for('check') }}" class="btn btn-sm btn-primary">Start First Compliance Audit</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% if scans %}
+<!-- Modal for Clear All Confirmation -->
+<div class="modal fade" id="clearAllModal" tabindex="-1" aria-labelledby="clearAllModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-bottom-0">
+                <h5 class="modal-title text-danger" id="clearAllModalLabel">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>Clear Entire Scan History?
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body py-2">
+                Are you sure you want to permanently delete all <strong>{{ scans|length }}</strong> historical audit records and their generated reports? This action cannot be undone.
+            </div>
+            <div class="modal-footer border-top-0">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                <form action="{{ url_for('clear_history') }}" method="POST">
+                    <button type="submit" class="btn btn-danger">Yes, Delete All</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

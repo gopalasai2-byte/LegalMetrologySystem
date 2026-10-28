@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block title %}Check Compliance | Legal Metrology Compliance System{% endblock %}
+
+{% block content %}
+<div class="container py-2">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3 border-bottom text-center">
+                    <h4 class="card-title fw-bold mb-1">
+                        <i class="bi bi-upc-scan text-primary me-2"></i> Upload Product Label
+                    </h4>
+                    <p class="text-muted small mb-0">
+                        Upload a clear image of a packaged commodity label. The system will extract printed declarations and compare them with configured Legal Metrology requirements.
+                    </p>
+                </div>
+
+                <div class="card-body p-4">
+                    <!-- Upload Form -->
+                    <form action="{{ url_for('upload_file') }}" method="POST" enctype="multipart/form-data" id="uploadForm">
+                        
+                        <!-- Drag and Drop Dropzone -->
+                        <div class="dropzone p-4 text-center border-dashed rounded bg-light cursor-pointer mb-3 position-relative" id="dropzone">
+                            <input type="file" name="label_image" id="fileInput" class="position-absolute top-0 start-0 w-100 h-100 opacity-0 cursor-pointer" accept=".jpg,.jpeg,.png,.webp" required>
+                            
+                            <div id="dropzoneContent">
+                                <div class="mb-3">
+                                    <i class="bi bi-cloud-arrow-up display-3 text-primary"></i>
+                                </div>
+                                <h5 class="fw-bold mb-1">Drag & Drop product label image here</h5>
+                                <p class="text-muted small mb-2">or click anywhere to browse from your device</p>
+                                <span class="badge bg-secondary-subtle text-secondary px-3 py-1">
+                                    Supported: JPG, JPEG, PNG, WEBP (Max 16 MB)
+                                </span>
+                            </div>
+
+                            <!-- Preview container when file chosen -->
+                            <div id="previewContainer" class="d-none mt-2">
+                                <img id="imagePreview" src="#" alt="Label Preview" class="img-thumbnail rounded shadow-sm" style="max-height: 250px;">
+                                <div class="mt-2">
+                                    <span id="fileNameDisplay" class="fw-semibold text-slate-800 small d-block"></span>
+                                    <button type="button" class="btn btn-sm btn-link text-danger p-0 mt-1" id="removeFileBtn">
+                                        <i class="bi bi-trash me-1"></i> Choose a different image
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Processing Indicator (hidden initially) -->
+                        <div id="processingIndicator" class="alert alert-info d-none text-center py-3">
+                            <div class="spinner-border text-primary mb-2" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <h6 class="fw-bold mb-1">Preprocessing Image & Running Compliance Engine...</h6>
+                            <p class="small text-muted mb-0">Executing OpenCV noise filtering, Tesseract OCR, regex entity extraction, and rule evaluation.</p>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg fw-bold shadow-sm" id="submitBtn">
+                                <i class="bi bi-shield-check me-2"></i> Check Compliance
+                            </button>
+                        </div>
+                    </form>
+
+                    <hr class="my-4">
+
+                    <!-- Quick Demo Sample Scenario Chooser -->
+                    <div class="bg-light p-3 rounded border">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <h6 class="fw-bold mb-0 text-dark">
+                                <i class="bi bi-lightning-charge-fill text-warning me-1"></i> Quick Test Scenarios
+                            </h6>
+                            <small class="text-muted">Instant demo without searching for images</small>
+                        </div>
+                        <p class="small text-muted mb-3">Select one of the pre-configured package labels to run through the full verification workflow:</p>
+                        
+                        <div class="row g-2">
+                            <div class="col-md-4">
+                                <a href="{{ url_for('run_sample', scenario='compliant') }}" class="btn btn-outline-success w-100 btn-sm text-start py-2">
+                                    <div class="fw-bold"><i class="bi bi-check-circle me-1"></i> Scenario 1</div>
+                                    <small class="text-muted d-block">Compliant ABC Shampoo (Pass)</small>
+                                </a>
+                            </div>
+                            <div class="col-md-4">
+                                <a href="{{ url_for('run_sample', scenario='missing') }}" class="btn btn-outline-danger w-100 btn-sm text-start py-2">
+                                    <div class="fw-bold"><i class="bi bi-x-circle me-1"></i> Scenario 2</div>
+                                    <small class="text-muted d-block">Missing Manufacturer (Fail)</small>
+                                </a>
+                            </div>
+                            <div class="col-md-4">
+                                <a href="{{ url_for('run_sample', scenario='blurry') }}" class="btn btn-outline-warning w-100 btn-sm text-start py-2 text-dark">
+                                    <div class="fw-bold"><i class="bi bi-exclamation-triangle me-1"></i> Scenario 3</div>
+                                    <small class="text-muted d-block">Degraded OCR Image (Review)</small>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Important Guidance Card -->
+            <div class="card border-0 shadow-sm bg-white">
+                <div class="card-body p-4">
+                    <h6 class="fw-bold text-dark mb-2">
+                        <i class="bi bi-camera me-2 text-primary"></i> For Best Verification Accuracy:
+                    </h6>
+                    <ul class="text-muted small mb-0 ps-3">
+                        <li class="mb-1">Ensure the label is well-lit and free from camera flash reflection or glare.</li>
+                        <li class="mb-1">Capture the entire rectangular surface of the packaged commodity containing printed declarations.</li>
+                        <li class="mb-1">Align the image horizontally to improve line-by-line OCR text extraction.</li>
+                        <li>Check that tiny mandatory fonts (MRP, Batch, Net Qty) are clearly readable in the preview.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

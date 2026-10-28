@@ -1,0 +1,310 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard | Legal Metrology Compliance System{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Hero Banner -->
+    <div class="card border-0 shadow-sm bg-gradient-primary text-white mb-4 overflow-hidden position-relative">
+        <div class="card-body p-4 p-md-5">
+            <div class="row align-items-center">
+                <div class="col-lg-8">
+                    <span class="badge bg-white text-primary fw-bold text-uppercase px-3 py-1 mb-3">College Major Project</span>
+                    <h1 class="display-6 fw-bold mb-2">Legal Metrology Compliance System</h1>
+                    <p class="lead mb-4 text-white-75">
+                        Automated Verification of Packaged Commodity Labels under the Legal Metrology (Packaged Commodities) Rules, 2011.
+                    </p>
+                    <div class="d-flex flex-wrap gap-3">
+                        <a href="{{ url_for('check') }}" class="btn btn-light btn-lg text-primary fw-bold px-4 shadow-sm">
+                            <i class="bi bi-upc-scan me-2"></i> Start Compliance Check
+                        </a>
+                        <a href="{{ url_for('rules') }}" class="btn btn-outline-light btn-lg px-4">
+                            <i class="bi bi-shield-check me-2"></i> View Verified Rules
+                        </a>
+                    </div>
+                </div>
+                <div class="col-lg-4 text-center mt-4 mt-lg-0 d-none d-lg-block">
+                    <div class="hero-graphic bg-white-10 rounded-circle p-4 d-inline-block border border-white-20">
+                        <i class="bi bi-box-seam display-1 text-white"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Overview Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-4 col-xl-2-4">
+            <div class="card border-0 shadow-sm stat-card h-100 border-start border-primary border-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="text-muted small text-uppercase fw-semibold">Total Audits</div>
+                            <h2 class="fw-bold mb-0 text-slate-800">{{ stats.total }}</h2>
+                        </div>
+                        <div class="stat-icon bg-primary-subtle text-primary rounded p-2">
+                            <i class="bi bi-folder-check fs-4"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-4 col-xl-2-4">
+            <div class="card border-0 shadow-sm stat-card h-100 border-start border-success border-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="text-muted small text-uppercase fw-semibold">Passed Checks</div>
+                            <h2 class="fw-bold mb-0 text-success">{{ stats.passed }}</h2>
+                        </div>
+                        <div class="stat-icon bg-success-subtle text-success rounded p-2">
+                            <i class="bi bi-check-circle fs-4"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-4 col-xl-2-4">
+            <div class="card border-0 shadow-sm stat-card h-100 border-start border-danger border-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="text-muted small text-uppercase fw-semibold">Failed Declarations</div>
+                            <h2 class="fw-bold mb-0 text-danger">{{ stats.failed }}</h2>
+                        </div>
+                        <div class="stat-icon bg-danger-subtle text-danger rounded p-2">
+                            <i class="bi bi-x-circle fs-4"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-6 col-xl-2-4">
+            <div class="card border-0 shadow-sm stat-card h-100 border-start border-warning border-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="text-muted small text-uppercase fw-semibold">Manual Review</div>
+                            <h2 class="fw-bold mb-0 text-warning">{{ stats.review }}</h2>
+                        </div>
+                        <div class="stat-icon bg-warning-subtle text-warning rounded p-2">
+                            <i class="bi bi-exclamation-triangle fs-4"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-6 col-xl-2-4">
+            <div class="card border-0 shadow-sm stat-card h-100 border-start border-info border-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="text-muted small text-uppercase fw-semibold">Avg. Compliance</div>
+                            <h2 class="fw-bold mb-0 text-info">{{ stats.avg_score }}%</h2>
+                        </div>
+                        <div class="stat-icon bg-info-subtle text-info rounded p-2">
+                            <i class="bi bi-pie-chart fs-4"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Core Principle & System Architecture Section -->
+    <div class="row g-4 mb-4">
+        <div class="col-lg-7">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white py-3 border-bottom d-flex align-items-center gap-2">
+                    <i class="bi bi-diagram-3-fill text-primary"></i>
+                    <h5 class="card-title fw-bold mb-0">System Architecture & Pipeline</h5>
+                </div>
+                <div class="card-body">
+                    <div class="p-3 bg-light rounded border mb-3">
+                        <h6 class="fw-bold text-dark mb-1">
+                            <i class="bi bi-info-circle text-primary me-1"></i> Core Project Principle
+                        </h6>
+                        <p class="text-muted small mb-0">
+                            <strong>"AI-based techniques are used mainly for OCR and text processing to extract information from product labels. The final compliance decision is generated by a configurable rule-based compliance engine."</strong>
+                            This ensures complete transparency, auditability, and adherence to statutory guidelines without black-box halluncinations.
+                        </p>
+                    </div>
+
+                    <!-- Flow Steps -->
+                    <div class="workflow-steps">
+                        <div class="workflow-step d-flex gap-3 mb-3">
+                            <div class="step-badge">1</div>
+                            <div>
+                                <h6 class="fw-bold mb-0">Image Preprocessing (OpenCV)</h6>
+                                <p class="text-muted small mb-0">Grayscale conversion, noise filtering (Gaussian Blur), rescaling, and Otsu's adaptive binarization for enhanced contrast.</p>
+                            </div>
+                        </div>
+                        <div class="workflow-step d-flex gap-3 mb-3">
+                            <div class="step-badge">2</div>
+                            <div>
+                                <h6 class="fw-bold mb-0">Text Extraction (Tesseract OCR)</h6>
+                                <p class="text-muted small mb-0">Segmenting textual declarations and obtaining word-level confidence metrics with robust Windows path resolution.</p>
+                            </div>
+                        </div>
+                        <div class="workflow-step d-flex gap-3 mb-3">
+                            <div class="step-badge">3</div>
+                            <div>
+                                <h6 class="fw-bold mb-0">NLP & Regex Field Extraction</h6>
+                                <p class="text-muted small mb-0">Pattern matching for Product Name, MRP, Net Quantity (units), Manufacturer, Physical Address, and Consumer Care.</p>
+                            </div>
+                        </div>
+                        <div class="workflow-step d-flex gap-3 mb-3">
+                            <div class="step-badge">4</div>
+                            <div>
+                                <h6 class="fw-bold mb-0">Legal Metrology Rule Engine</h6>
+                                <p class="text-muted small mb-0">Cross-verifies extracted fields against statutory requirements in SQLite, producing PASS, FAIL, or REVIEW statuses.</p>
+                            </div>
+                        </div>
+                        <div class="workflow-step d-flex gap-3">
+                            <div class="step-badge">5</div>
+                            <div>
+                                <h6 class="fw-bold mb-0">Audit Report & PDF Generation</h6>
+                                <p class="text-muted small mb-0">Calculates overall compliance score percentage and produces a formal downloadable PDF audit certificate via ReportLab.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <!-- Quick Start Demonstration Box -->
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white py-3 border-bottom d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-play-circle-fill text-primary"></i>
+                        <h5 class="card-title fw-bold mb-0">One-Click Demonstration</h5>
+                    </div>
+                    <span class="badge bg-primary-subtle text-primary">Preloaded</span>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted small mb-3">
+                        Test the system immediately with realistic college reviewer demonstration scenarios:
+                    </p>
+                    
+                    <div class="list-group list-group-flush gap-2">
+                        <a href="{{ url_for('run_sample', scenario='compliant') }}" class="list-group-item list-group-item-action border rounded p-3 d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="bg-success-subtle text-success p-2 rounded">
+                                    <i class="bi bi-check2-circle fs-4"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0 fw-bold text-dark">Scenario 1 — Fully Compliant</h6>
+                                    <small class="text-muted">ABC Shampoo with complete mandatory declarations.</small>
+                                </div>
+                            </div>
+                            <span class="badge bg-success">PASS</span>
+                        </a>
+
+                        <a href="{{ url_for('run_sample', scenario='missing') }}" class="list-group-item list-group-item-action border rounded p-3 d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="bg-danger-subtle text-danger p-2 rounded">
+                                    <i class="bi bi-x-circle fs-4"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0 fw-bold text-dark">Scenario 2 — Missing Fields</h6>
+                                    <small class="text-muted">Label missing mandatory Manufacturer & Address.</small>
+                                </div>
+                            </div>
+                            <span class="badge bg-danger">FAIL</span>
+                        </a>
+
+                        <a href="{{ url_for('run_sample', scenario='blurry') }}" class="list-group-item list-group-item-action border rounded p-3 d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="bg-warning-subtle text-warning p-2 rounded">
+                                    <i class="bi bi-eye-slash fs-4"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0 fw-bold text-dark">Scenario 3 — Degraded / Blurry</h6>
+                                    <small class="text-muted">Uncertain OCR text triggering manual review.</small>
+                                </div>
+                            </div>
+                            <span class="badge bg-warning text-dark">REVIEW</span>
+                        </a>
+                    </div>
+
+                    <div class="mt-4 pt-2 text-center">
+                        <a href="{{ url_for('check') }}" class="btn btn-outline-primary w-100">
+                            <i class="bi bi-cloud-arrow-up me-2"></i> Upload Custom Image
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Scans Section -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white py-3 border-bottom d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-clock-history text-primary"></i>
+                <h5 class="card-title fw-bold mb-0">Recent Compliance Scans</h5>
+            </div>
+            <a href="{{ url_for('history') }}" class="btn btn-sm btn-outline-secondary">View Full History</a>
+        </div>
+        <div class="card-body p-0">
+            {% if recent_scans %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-3">Audit ID</th>
+                            <th>Timestamp</th>
+                            <th>Original File</th>
+                            <th>Compliance Score</th>
+                            <th>Status</th>
+                            <th class="text-end pe-3">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for scan in recent_scans %}
+                        <tr>
+                            <td class="ps-3 fw-bold text-slate-800">#LMC-{{ "%04d"|format(scan.id) }}</td>
+                            <td><small class="text-muted">{{ scan.scan_date }}</small></td>
+                            <td><span class="text-truncate d-inline-block" style="max-width: 200px;">{{ scan.filename }}</span></td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="progress flex-grow-1" style="height: 6px; width: 80px;">
+                                        <div class="progress-bar {% if scan.compliance_score >= 80 %}bg-success{% elif scan.compliance_score >= 50 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                             style="width: {{ scan.compliance_score }}%;"></div>
+                                    </div>
+                                    <span class="small fw-semibold">{{ scan.compliance_score }}%</span>
+                                </div>
+                            </td>
+                            <td>
+                                {% if scan.overall_status == 'PASS' %}
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">PASS</span>
+                                {% elif scan.overall_status == 'FAIL' %}
+                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1">FAIL</span>
+                                {% else %}
+                                    <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-2 py-1">REVIEW</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end pe-3">
+                                <a href="{{ url_for('result', scan_id=scan.id) }}" class="btn btn-sm btn-outline-primary me-1">
+                                    <i class="bi bi-eye"></i> View
+                                </a>
+                                <a href="{{ url_for('download_report', scan_id=scan.id) }}" class="btn btn-sm btn-outline-secondary">
+                                    <i class="bi bi-file-earmark-pdf"></i> PDF
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5 text-muted">
+                <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                <p class="mb-0">No compliance audits recorded yet. Run your first check using the buttons above.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

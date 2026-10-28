@@ -1,0 +1,134 @@
+/* Legal Metrology Compliance System - Custom Stylesheet */
+
+:root {
+    --bs-primary: #0284c7;
+    --bs-primary-rgb: 2, 132, 199;
+    --bs-font-sans-serif: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --slate-900: #0f172a;
+    --slate-800: #1e293b;
+    --slate-700: #334155;
+    --slate-600: #475569;
+}
+
+body {
+    font-family: var(--bs-font-sans-serif);
+    color: var(--slate-800);
+    background-color: #f8fafc;
+}
+
+.bg-slate-900 {
+    background-color: #0f172a !important;
+}
+
+.text-slate-800 {
+    color: #1e293b !important;
+}
+
+.text-slate-900 {
+    color: #0f172a !important;
+}
+
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #0369a1 100%);
+}
+
+.bg-white-10 {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.border-white-20 {
+    border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Dashboard Statistics Cards */
+.stat-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border-radius: 0.75rem;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+}
+
+.col-xl-2-4 {
+    flex: 0 0 auto;
+    width: 20%;
+}
+
+@media (max-width: 1199.98px) {
+    .col-xl-2-4 {
+        width: 33.333%;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .col-xl-2-4 {
+        width: 50%;
+    }
+}
+
+/* Workflow Step Badges */
+.step-badge {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background-color: #0284c7;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    flex-shrink: 0;
+    box-shadow: 0 2px 4px rgba(2, 132, 199, 0.3);
+}
+
+/* Dropzone Styles */
+.border-dashed {
+    border: 2px dashed #94a3b8;
+    background-color: #ffffff;
+    transition: all 0.2s ease;
+}
+
+.border-dashed:hover, .border-dashed.dragover {
+    border-color: #0284c7;
+    background-color: #f0f9ff;
+}
+
+.cursor-pointer {
+    cursor: pointer;
+}
+
+/* OCR Text Viewer */
+.ocr-text-viewer {
+    scrollbar-width: thin;
+    scrollbar-color: #475569 #0f172a;
+}
+
+.ocr-text-viewer::-webkit-scrollbar {
+    width: 8px;
+}
+
+.ocr-text-viewer::-webkit-scrollbar-track {
+    background: #0f172a;
+}
+
+.ocr-text-viewer::-webkit-scrollbar-thumb {
+    background: #475569;
+    border-radius: 4px;
+}
+
+/* Badges and Accents */
+.badge {
+    letter-spacing: 0.025em;
+}
+
+.tracking-tight {
+    letter-spacing: -0.025em;
+}
+
+@media (min-width: 768px) {
+    .border-end-md {
+        border-right: 1px solid #e2e8f0;
+    }
+}
