@@ -3,16 +3,26 @@ import re
 def normalize_text(raw_text):
     """
     Normalizes raw OCR text:
-    - Standardizes unicode and currency symbols
-    - Normalizes common OCR artifacts
-    - Cleans up whitespace and multiple blank lines
+    - Standardizes unicode, fullwidth punctuation, and currency symbols
+    - Fixes common OCR artifacts and concatenation in statutory packaging phrases
+    - Standardizes linebreaks and trims whitespace
     """
     if not raw_text:
         return ""
     
     text = raw_text.replace("\r\n", "\n").replace("\r", "\n")
-    # Strip control characters
+    # Standardize fullwidth punctuation and Unicode artifacts
+    text = text.replace('\uff1a', ':').replace('\uff0c', ',').replace('\uff08', '(').replace('\uff09', ')')
+    text = text.replace('\u2013', '-').replace('\u2014', '-').replace('\u2212', '-')
+    # Strip unprintable control characters (preserve ₹ and printable symbols)
     text = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x9f]', '', text)
+
+    # Normalize common OCR typos in packaging declarations
+    text = re.sub(r'\bMRP\s*\(\s*l\s*ncl\b', 'MRP (incl', text, flags=re.IGNORECASE)
+    text = re.sub(r'\balltaxes\b', 'all taxes', text, flags=re.IGNORECASE)
+    text = re.sub(r'\bUnitSalePrice\b', 'Unit Sale Price', text, flags=re.IGNORECASE)
+    text = re.sub(r'\bNetQuantity\b', 'Net Quantity', text, flags=re.IGNORECASE)
+    text = re.sub(r'\bManufacturedby\b', 'Manufactured by', text, flags=re.IGNORECASE)
     
     lines = [line.strip() for line in text.split("\n")]
     non_empty_lines = [l for l in lines if l]
@@ -104,18 +114,34 @@ def extract_mrp(raw_text):
     """
     Extracts Maximum Retail Price (MRP) under Rule 6(1)(e):
     Detects patterns like:
+    - MRP (Incl. of all taxes) : ₹ 349.00
     - MRP Rs. 100.00 (incl. of all taxes)
     - MRP: ₹210
     - M.R.P. Rs. 210.00
-    - Rs. 0.79 per g (Unit Sale Price)
+    - Multiline MRP labels & values
+    - Rs. 0.79 per g / Standard Unit Sale Price: 1.03 per ml (Unit Sale Price)
     """
+    # 1. Check for Unit Sale Price (USP) under Legal Metrology 2022 amendment
+    usp_match = re.search(
+        r'(?:(?:Unit\s*Sale\s*Price|USP)\s*[:\-–]?\s*(?:Rs\.?|₹|\?)?\s*|(?<!\w)(?:Rs\.?|₹)\s*)([0-9]+(?:[.,][0-9]{1,2})?)\s*(?:per|/)\s*(g|ml|kg|l)\b',
+        raw_text,
+        re.IGNORECASE
+    )
+    extra_usp = ""
+    if usp_match:
+        extra_usp = f" (Unit Sale Price: ₹{usp_match.group(1)}/{usp_match.group(2)})"
+
     patterns = [
-        # MRP Rs. 100.00 or MRP: ₹210
-        r'(?:M\.?\s*R\.?\s*P\.?|Maximum\s+Retail\s+Price)\s*(?:[:\-–]|is)?\s*(?:₹|Rs\.?|INR|\bRS\b)?\s*([0-9]+(?:[.,][0-9]{1,2})?)\s*(?:/\-|incl|ind|only|\(|$)',
-        # ₹ 210 or Rs 210 preceding or following MRP
+        # MRP (Incl. of all taxes) : ₹ 349.00 OR MRP : ₹ 349.00 (incl. of all taxes)
+        r'(?:M\.?\s*R\.?\s*P\.?|Maximum\s+Retail\s+Price)(?:\s*\([^)]*\))?\s*[:\-–=is]?\s*(?:₹|Rs\.?|INR|\bRS\b)?\s*([0-9]+(?:[.,][0-9]{1,2})?)\s*(?:/\-|incl|ind|only|\(|$)',
+        # ₹ 210 or Rs 210 with optional inclusive clause
         r'(?:₹|Rs\.?|INR)\s*([0-9]+(?:[.,][0-9]{1,2})?)\s*(?:\(?(?:incl|ind|inclusive)[^)\n]*\)?)?',
-        # MRP 210
-        r'\bMRP\b[^\d\n]*([0-9]+(?:[.,][0-9]{1,2})?)'
+        # MRP keyword anywhere on line followed by a price figure
+        r'\b(?:M\.?\s*R\.?\s*P\.?|Maximum\s+Retail\s+Price)\b[^\d\n]*([0-9]+(?:[.,][0-9]{1,2})?)',
+        # Multiline: MRP on line 1, price on line 2
+        r'(?:M\.?\s*R\.?\s*P\.?|Maximum\s+Retail\s+Price)[^\d\n]*(?:\n\s*[:\-–=]?\s*(?:₹|Rs\.?|INR)?\s*([0-9]+(?:[.,][0-9]{1,2})?))',
+        # Multiline: price on line 1, MRP on line 2
+        r'(?:₹|Rs\.?|INR|:)?\s*([0-9]+(?:[.,][0-9]{1,2})?)\s*\n\s*(?:M\.?\s*R\.?\s*P\.?|Maximum\s+Retail\s+Price)'
     ]
 
     for pat in patterns:
@@ -126,15 +152,8 @@ def extract_mrp(raw_text):
                 numeric_val = float(raw_val)
                 if numeric_val > 0:
                     formatted_display = f"₹{numeric_val:g}"
-                    
-                    # Also check for Unit Sale Price (USP) under Legal Metrology 2022 amendment
-                    usp_match = re.search(r'(?:Rs\.?|₹)\s*([0-9]+(?:[.,][0-9]{1,2})?)\s*(?:per|/)\s*(g|ml|kg|l)\b', raw_text, re.IGNORECASE)
-                    extra_info = ""
-                    if usp_match:
-                        extra_info = f" (Unit Sale Price: ₹{usp_match.group(1)}/{usp_match.group(2)})"
-                        
                     return {
-                        "value": f"{formatted_display}{extra_info}",
+                        "value": f"{formatted_display}{extra_usp}",
                         "numeric_value": numeric_val,
                         "status": "Detected",
                         "confidence": "HIGH",
@@ -166,13 +185,13 @@ def extract_net_quantity(raw_text):
     Extracts Net Quantity and Metric Units under Rule 6(1)(b) & Rule 12:
     Detects patterns like:
     - Net Wt.: 126 g / 126g
-    - Net Quantity: 180 ml
+    - Net Quantity: 180 ml / NetQuantity :340ml
     - Net Qty: 1 kg
-    - Standalone 126g / 180ml
+    - Standalone 126g / 180ml / 340ml
     """
     units_pattern = r'(?:mg|g|kg|ml|l|litre|liter|litres|liters)'
     
-    # 1. Explicit keyword followed by number and unit (supports attached '126g' or '126.g')
+    # 1. Explicit keyword followed by number and unit (supports attached '126g', '340ml', etc.)
     pattern_explicit = re.compile(
         r'(?:Net\s*(?:Quantity|Qty|Weight|Wt|Vol|Volume|Contents?|W[t:]?))\s*[:\-–.]*\s*([0-9]+(?:[.,][0-9]+)?)\.?\s*(' + units_pattern + r')\b',
         re.IGNORECASE
@@ -208,7 +227,7 @@ def extract_net_quantity(raw_text):
             "detail": f"Standard metric unit declaration detected ({val_str} {unit_str})"
         }
 
-    # 3. Standalone number + standard unit (e.g. '126g', '126.g', or '126 g')
+    # 3. Standalone number + standard unit (e.g. '126g', '180ml', or '340ml')
     pattern_standalone = re.compile(r'\b([0-9]+(?:[.,][0-9]+)?)\.?\s*(' + units_pattern + r')\b', re.IGNORECASE)
     matches = pattern_standalone.findall(raw_text)
     for m in matches:
@@ -251,12 +270,13 @@ def extract_manufacturer(raw_text, lines):
     """
     Extracts Manufacturer or Packer details under Rule 6(1)(d).
     Detects:
+    - Procter & Gamble Home Products India Pvt Ltd / P&G
     - Mondelez India Foods Private Limited / Cadbury
-    - Manufactured by: ABC Products Pvt Ltd
-    - Mfd. By:
-    - Packed by:
+    - Mother Dairy, Amul, Lijjat, Haldiram, Tata, Dabur, Nestle, HUL, ITC, Britannia, Parle, Colgate, Marico
+    - Explicit prefixes: Manufactured by, Mfd. by, Packed by, Marketed by
     """
     known_manufacturers = [
+        ("Procter & Gamble Home Products India Pvt Ltd", ["procter & gamble", "procter and gamble", "procter&gamble", "procter", "p&g"]),
         ("Mondelez India Foods Private Limited", ["mondelez", "cadbury", "mdlz"]),
         ("Mother Dairy Fruit & Vegetable Pvt Ltd", ["mother dairy", "motherdairy"]),
         ("Gujarat Co-operative Milk Marketing Federation Ltd (Amul)", ["amul", "gcmmf"]),
@@ -269,20 +289,33 @@ def extract_manufacturer(raw_text, lines):
         ("ITC Limited", ["itc limited"]),
         ("Britannia Industries Limited", ["britannia"]),
         ("Parle Products Pvt Ltd", ["parle"]),
+        ("Colgate-Palmolive (India) Limited", ["colgate-palmolive", "colgate palmolive", "colgate"]),
+        ("Marico Limited", ["marico", "parachute"]),
         ("ABC Products Pvt Ltd", ["abc products"])
     ]
     raw_lower = raw_text.lower()
     for canon_name, aliases in known_manufacturers:
-        if any(alias in raw_lower for alias in aliases):
-            return {
-                "value": canon_name,
-                "status": "Detected",
-                "confidence": "HIGH",
-                "detail": f"Identified registered corporate manufacturer ({canon_name})"
-            }
+        for alias in aliases:
+            if len(alias) <= 4:
+                # Requires word boundaries so short acronyms (e.g. 'hul') don't match inside words (e.g. laurethsulfate)
+                if re.search(r'(?<![a-zA-Z0-9])' + re.escape(alias) + r'(?![a-zA-Z0-9])', raw_lower):
+                    return {
+                        "value": canon_name,
+                        "status": "Detected",
+                        "confidence": "HIGH",
+                        "detail": f"Identified registered corporate manufacturer ({canon_name})"
+                    }
+            else:
+                if alias in raw_lower:
+                    return {
+                        "value": canon_name,
+                        "status": "Detected",
+                        "confidence": "HIGH",
+                        "detail": f"Identified registered corporate manufacturer ({canon_name})"
+                    }
 
     mfg_pattern = re.compile(
-        r'(?:(?:Product\s+)?Manufactured\s+by|Mfd\.?\s*by|Packed\s+by|Marketed\s+by|Pkd\.?\s*by|Mfg\s+by|Made\s+by)\s*[:\-–]?\s*([^\n\r]+)',
+        r'(?:(?:Product\s+)?Manufactured\s*by|Mfd\.?\s*by|Packed\s*by|Marketed\s*by|Pkd\.?\s*by|Mfg\s*by|Made\s*by)\s*[:\-–]?\s*([^\n\r]+)',
         re.IGNORECASE
     )
     matches = mfg_pattern.findall(raw_text)
@@ -303,7 +336,10 @@ def extract_manufacturer(raw_text, lines):
             "detail": "Manufacturer identity identified from label prefix"
         }
 
-    corp_pattern = re.compile(r'\b([A-Za-z0-9\s&]+(?:Pvt\.?\s*Ltd\.?|Private\s+Limited|Limited|Ltd\.?|LLP|Enterprises|Industries|Laboratories))\b', re.IGNORECASE)
+    corp_pattern = re.compile(
+        r'([A-Za-z0-9\s&]+(?:Pvt\.?\s*Ltd\.?|Pvt\.?\s*Limited|Private\s+Limited|Limited|Ltd\.?|LLP|Enterprises|Industries|Laboratories))',
+        re.IGNORECASE
+    )
     for line in lines:
         corp_match = corp_pattern.search(line)
         if corp_match:
@@ -335,7 +371,7 @@ def extract_address(raw_text, lines, mfg_info):
     Extracts Manufacturer / Packer Address under Rule 6(1)(d).
     Looks for:
     - Explicit 'Address:', 'Manufactured at:', 'Premises:', 'Unit No.'
-    - Geographic indicators (Mumbai, Parel, Hyderabad, Telangana, Andhra Pradesh, etc.)
+    - Geographic indicators (Gurugram, Baddi, Mumbai, Hyderabad, Bengaluru, etc.)
     - Postal PIN codes (6 digits)
     """
     addr_match = re.search(
@@ -359,6 +395,8 @@ def extract_address(raw_text, lines, mfg_info):
         r'\b(?:Chittoor|Sri\s+City|Andhra\s+Pradesh)\b': "Sri City, Andhra Pradesh",
         r'\b(?:Bengaluru|Bangalore|Karnataka)\b': "Bengaluru, Karnataka",
         r'\b(?:Delhi|New\s+Delhi)\b': "New Delhi",
+        r'\b(?:Gurgaon|Gurugram|Haryana)\b': "Gurugram, Haryana",
+        r'\b(?:Solan|Baddi|Himachal|Himachal\s+Pradesh)\b': "Baddi, Himachal Pradesh",
         r'\b(?:Chennai|Tamil\s+Nadu)\b': "Chennai, Tamil Nadu",
         r'\b(?:Kolkata|West\s+Bengal)\b': "Kolkata, West Bengal",
         r'\b(?:Pune)\b': "Pune, Maharashtra",
@@ -393,8 +431,8 @@ def extract_consumer_care(raw_text):
     """
     Extracts Consumer Care / Customer Service Contact Info under Rule 6(1)(n):
     Detects:
-    - Toll-free numbers: 1800 22 7080, 1800-123-456, 1800 227080
-    - Email addresses: suggestions@mdlzindia.com, care@abc.com
+    - Toll-free numbers: 1800 22 7080, 1800-123-456, 1800-202-1364
+    - Email addresses: consumerin@pg.com, suggestions@mdlzindia.com, care@abc.com
     - Mobile/Helpline numbers with explicit contact prefix (excludes FSSAI licenses)
     """
     contacts = []
@@ -456,11 +494,11 @@ def extract_date_declaration(raw_text):
     Extracts Month & Year of Packaging / Best Before under Rule 6(1)(c).
     """
     dates_found = []
-    bb_match = re.search(r'\b(BEST\s*BEFORE(?:\s+[0-9]+\s+MONTHS(?:\s+FROM\s+[A-Z]+)?)?)\b', raw_text, re.IGNORECASE)
+    bb_match = re.search(r'\b(BEST\s*BEFORE(?:\s+[0-9]+\s+MONTHS(?:\s+FROM\s+[A-Z]+)?)?|USE\s*BEFORE(?:\s*[:\-–]?\s*[0-9]+\s*MONTHS)?)\b', raw_text, re.IGNORECASE)
     if bb_match:
         dates_found.append(bb_match.group(1).title())
-    elif re.search(r'\bBEST\b[^\n\r]{0,45}\bBEFORE\b', raw_text, re.IGNORECASE):
-        dates_found.append("Best Before Advisory")
+    elif re.search(r'\b(?:BEST|USE)\b[^\n\r]{0,45}\bBEFORE\b', raw_text, re.IGNORECASE):
+        dates_found.append("Best / Use Before Advisory")
 
     pkd_match = re.search(r'\b(Pkd\.?|Mfg\.?|Date\s+of\s+Pkg\.?)(?:\s*[:\-–]?\s*([0-9]{1,2}[/-][0-9]{2,4}|[A-Za-z]{3}\s*[0-9]{2,4}))?', raw_text, re.IGNORECASE)
     if pkd_match:
@@ -531,7 +569,7 @@ def extract_all_fields(raw_text):
 
     # Fallback cross-check: If address not found separately but manufacturer line contains location
     if addr["status"] != "Detected" and mfg["status"] == "Detected" and mfg["value"]:
-        if re.search(r'(?:Mumbai|Hyderabad|Bangalore|Delhi|Telangana|Maharashtra|Andhra\s+Pradesh|\b\d{6}\b)', mfg["value"], re.IGNORECASE):
+        if re.search(r'(?:Mumbai|Hyderabad|Bangalore|Delhi|Telangana|Maharashtra|Andhra\s+Pradesh|Gurugram|Haryana|Baddi|Himachal|\b\d{6}\b)', mfg["value"], re.IGNORECASE):
             addr = {
                 "value": "Included within Manufacturer Declaration",
                 "status": "Detected",
