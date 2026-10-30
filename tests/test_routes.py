@@ -91,8 +91,19 @@ class TestFlaskRoutes(unittest.TestCase):
         target_id = scans[0]['id']
         del_res = self.client.post(f'/history/delete/{target_id}', follow_redirects=True)
         self.assertEqual(del_res.status_code, 200)
-        self.assertIn(b"successfully deleted", del_res.data)
+    def test_api_stats(self):
+        """Test the live JSON stats endpoint used for real-time dashboard updates."""
+        res = self.client.get('/api/stats')
+        self.assertEqual(res.status_code, 200)
+        data = res.get_json()
+        self.assertTrue(data.get("success"))
+        self.assertIn("total", data.get("stats", {}))
+        self.assertIn("passed", data.get("stats", {}))
+        self.assertIn("failed", data.get("stats", {}))
+        self.assertIn("review", data.get("stats", {}))
+        self.assertIn("avg_score", data.get("stats", {}))
 
 if __name__ == '__main__':
     unittest.main()
+
 

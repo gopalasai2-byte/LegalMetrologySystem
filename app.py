@@ -54,10 +54,20 @@ def index():
     recent_scans = get_all_scans()[:5]
     return render_template("index.html", stats=stats, recent_scans=recent_scans)
 
+@app.route("/api/stats")
+def api_stats():
+    """Returns live JSON statistics for dynamic dashboard updates."""
+    stats = get_scan_statistics()
+    return jsonify({
+        "success": True,
+        "stats": stats
+    })
+
 @app.route("/check")
 def check():
     """Label upload interface with drag-and-drop and preloaded scenario buttons."""
-    return render_template("check.html")
+    stats = get_scan_statistics()
+    return render_template("check.html", stats=stats)
 
 @app.route("/upload", methods=["POST"])
 def upload_file():
@@ -196,12 +206,14 @@ def result(scan_id):
 
     extracted_data = scan.get("extracted_data", {})
     compliance_result = evaluate_compliance(extracted_data)
+    stats = get_scan_statistics()
 
     return render_template(
         "result.html",
         scan=scan,
         extracted=extracted_data,
-        compliance=compliance_result
+        compliance=compliance_result,
+        stats=stats
     )
 
 @app.route("/history")

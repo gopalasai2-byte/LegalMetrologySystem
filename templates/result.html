@@ -84,6 +84,19 @@
         </div>
     </div>
 
+    <!-- Cumulative System Metrics (Auto-Updated After Every Scan) -->
+    <div class="mb-4">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+            <h6 class="fw-bold text-slate-800 mb-0">
+                <i class="bi bi-speedometer2 text-primary me-1"></i> Cumulative System Metrics (Updated With This Scan)
+            </h6>
+            <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">
+                <i class="bi bi-broadcast me-1"></i> Live Auto-Synced
+            </span>
+        </div>
+        {% include "components/stats_cards.html" %}
+    </div>
+
     <!-- Main Content Grid -->
     <div class="row g-4 mb-4">
         

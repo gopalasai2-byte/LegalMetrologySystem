@@ -86,4 +86,60 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    // --- Real-Time Auto-Update for Statistics Cards ---
+    function fetchAndUpdateStats() {
+        const statsRow = document.getElementById('statsOverviewRow');
+        if (!statsRow) return;
+
+        fetch('/api/stats')
+            .then(response => {
+                if (!response.ok) throw new Error('Network error');
+                return response.json();
+            })
+            .then(data => {
+                if (data && data.success && data.stats) {
+                    const s = data.stats;
+                    updateStatValue('stat-total', s.total);
+                    updateStatValue('stat-passed', s.passed);
+                    updateStatValue('stat-failed', s.failed);
+                    updateStatValue('stat-review', s.review);
+                    updateStatValue('stat-avg', (s.avg_score !== undefined ? s.avg_score : 0) + '%');
+                }
+            })
+            .catch(() => {
+                // Silently ignore transient network interruptions
+            });
+    }
+
+    function updateStatValue(elementId, newValue) {
+        const el = document.getElementById(elementId);
+        if (!el) return;
+        const currentVal = el.textContent.trim();
+        const strVal = String(newValue).trim();
+        if (currentVal !== strVal) {
+            el.textContent = strVal;
+            el.classList.remove('stat-updated-pulse');
+            void el.offsetWidth; // Force CSS reflow
+            el.classList.add('stat-updated-pulse');
+        }
+    }
+
+    if (document.getElementById('statsOverviewRow')) {
+        // Poll every 3 seconds for immediate updates after any label scan
+        setInterval(fetchAndUpdateStats, 3000);
+
+        // Immediate fetch when window gains focus or tab becomes active
+        window.addEventListener('focus', fetchAndUpdateStats);
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                fetchAndUpdateStats();
+            }
+        });
+
+        // Handle Back-Forward Cache (bfcache) when navigating back
+        window.addEventListener('pageshow', () => {
+            fetchAndUpdateStats();
+        });
+    }
 });
